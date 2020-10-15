@@ -17,7 +17,8 @@ def init_chrome(user_id):
     browser = webdriver.Chrome(options=opt_args)
     # browser.maximize_window()
     # browser = webdriver.Chrome()
-    browser.get("https://www.imdb.com/user/"+user_id)
+
+    browser.get("https://www.imdb.com/user/" + user_id)
     return browser
 
 
@@ -30,7 +31,6 @@ def visit_ratings(browser):
 
 
 def create_ratings_structure(browser):
-
     try:
         # ratings_container = browser.find_elements(By.XPATH, "//div[@id='ratings-container']")
 
@@ -38,20 +38,20 @@ def create_ratings_structure(browser):
         #
         # if int(ratings_number) is 240:
         #     print("Correct #ratings!")
-        #
-        ratings = [browser.find_elements(By.XPATH, "//div[@class='lister-item mode-detail']")]
 
+        # ratings = [browser.find_elements(By.XPATH, "//div[@class='lister-item mode-detail']")]
+        ratings = browser.find_elements(By.XPATH, "//div[contains(@class, 'lister-item mode-detail')]")
+        # ratings_container = content = browser.find_element(By.XPATH, "//div[@id='ratings-container']")
+
+        print("Found {} ratings".format(len(ratings)))
+
+        ratings_titles = []
         for i in ratings:
-            # "//form[@id='loginForm']/input[1]")
-            t = browser.find_element(By.XPATH, "//h3[@class='lister-item-header']/a")
-            print(t.text)
+            if i.text != "":
+                ratings_titles.append(i.text.split('\n')[0][3:])
 
-        # k = 0
-        # for i in t:
-        #     k += 1
-        #     print(i.text)
-        #
-        # print('/n.{}'.format(k))
+        print(ratings_titles)
+
     except selenium.common.exceptions.NoSuchElementException:
         print('*** NOT FOUND ***')
 
@@ -62,7 +62,6 @@ def close_browser(browser):
 
 
 def main():
-
     # user_id = 'ur57539865'
     user_id = 'ur59732679'
 
@@ -71,7 +70,7 @@ def main():
 
     s = input('Close me?')
 
-    if s is 'y':
+    if s == 'y':
         close_browser(b)
 
 
