@@ -1,7 +1,5 @@
-import requests
-import re
-import selenium
-import shutil
+import requests, re, selenium, shutil
+import _pickle as pickle
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
@@ -46,20 +44,30 @@ def create_ratings_structure(browser):
 
         print("Found {} ratings".format(len(ratings)))
 
-        k = 0
-        ratings_titles = []
-        for i in ratings[:2]:
-            if i.text != "":
-                if k == 1:
-                    a = i.find_element_by_css_selector('img').get_attribute('src')
-                    response = requests.get(a, stream=True)
-                    s = str(re.sub('\([^)]*\)', '', i.text.split('\n')[0][3:]).split())
-                    with open(s + '.jpg', 'wb') as out_file:
-                        shutil.copyfileobj(response.raw, out_file)
-                ratings_titles.append(i.text.split('\n')[0][3:])
-            k = k + 1
+        downloadImages = True
 
-        print(ratings_titles)
+        movieRating = dict()
+        ratings_titles = []
+        for i in ratings:
+            if i.text != "":
+                title = i.text.split('\n')[0][3:]
+                a = i.find_element_by_css_selector('img').get_attribute('src')
+                personal_rating = i.text.split('\n')[3]
+                response = requests.get(a, stream=True)
+                s = str(re.sub(r'\([^)]*\)', '', title).rstrip())
+                movieRating[s] = personal_rating
+                if downloadImages:
+                    with open('img/' + s + '.jpg', 'wb') as out_file:
+                        shutil.copyfileobj(response.raw, out_file)
+                ratings_titles.append(title)
+
+        filehandler = open(b"movieRatings.obj", "wb")
+        pickle.dump(movieRating, filehandler)
+        filehandler.close()
+
+        # print(ratings_titles)
+        print(movieRating)
+
 
     except selenium.common.exceptions.NoSuchElementException:
         print('*** NOT FOUND ***')
