@@ -1,4 +1,4 @@
-import requests, re, selenium, shutil
+import requests, re, selenium, shutil, time
 import _pickle as pickle
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
@@ -31,43 +31,50 @@ def visit_ratings(browser):
 
 def create_ratings_structure(browser):
     try:
-        # ratings_container = browser.find_elements(By.XPATH, "//div[@id='ratings-container']")
 
-        # ratings_number = browser.find_element(By.XPATH, "//span[@id='lister-new-size]").get_attribute("value")
-        #
-        # if int(ratings_number) is 240:
-        #     print("Correct #ratings!")
-
-        # ratings = [browser.find_elements(By.XPATH, "//div[@class='lister-item mode-detail']")]
-        ratings = browser.find_elements(By.XPATH, "//div[contains(@class, 'lister-item mode-detail')]")
-        # ratings_container = content = browser.find_element(By.XPATH, "//div[@id='ratings-container']")
-
-        print("Found {} ratings".format(len(ratings)))
-
-        downloadImages = True
-
+        flagNext = True
+        k = 0
         movieRating = dict()
-        ratings_titles = []
-        for i in ratings:
-            if i.text != "":
-                title = i.text.split('\n')[0][3:]
-                a = i.find_element_by_css_selector('img').get_attribute('src')
-                personal_rating = i.text.split('\n')[3]
-                response = requests.get(a, stream=True)
-                s = str(re.sub(r'\([^)]*\)', '', title).rstrip())
-                movieRating[s] = personal_rating
-                if downloadImages:
-                    with open('img/' + s + '.jpg', 'wb') as out_file:
-                        shutil.copyfileobj(response.raw, out_file)
-                ratings_titles.append(title)
 
-        filehandler = open(b"movieRatings.obj", "wb")
-        pickle.dump(movieRating, filehandler)
-        filehandler.close()
+        while flagNext:
+
+            if k != 0:
+                time.sleep(2)
+
+            nextPage = browser.find_element_by_xpath("//a[@class='flat-button lister-page-next next-page']")
+            ratings = browser.find_elements(By.XPATH, "//div[contains(@class, 'lister-item mode-detail')]")
+
+            print("Found {} ratings".format(len(ratings)))
+
+            downloadImages = False
+
+            ratings_titles = []
+            for i in ratings:
+                if i.text != "":
+                    title = i.text.split('\n')[0][3:]
+                    a = i.find_element_by_css_selector('img').get_attribute('src')
+                    personal_rating = i.text.split('\n')[3]
+                    s = str(re.sub(r'\([^)]*\)', '', title).rstrip())
+                    movieRating[s] = personal_rating
+                    if downloadImages:
+                        print("Trying to download: {}".format(a))
+                        response = requests.get(a, stream=True)
+                        with open('img/' + s + '.jpg', 'wb') as out_file:
+                            shutil.copyfileobj(response.raw, out_file)
+                    ratings_titles.append(title)
+
+            if k != 1:
+                k = k + 1
+                nextPage.click()
+            else:
+                flagNext = False
+
+        fileHandler = open(b"movieRatings.obj", "wb")
+        pickle.dump(movieRating, fileHandler)
+        fileHandler.close()
 
         # print(ratings_titles)
-        print(movieRating)
-
+        # print(movieRating)
 
     except selenium.common.exceptions.NoSuchElementException:
         print('*** NOT FOUND ***')
@@ -80,7 +87,8 @@ def close_browser(browser):
 
 def main():
     # user_id = 'ur57539865'
-    user_id = 'ur59732679'
+    # user_id = 'ur59732679'
+    user_id = 'ur18123905'
 
     b = init_chrome(user_id)
     visit_ratings(b)
