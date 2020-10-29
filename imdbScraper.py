@@ -1,5 +1,10 @@
-import requests, re, selenium, shutil, time
 import _pickle as pickle
+import re
+import requests
+import selenium
+import shutil
+import time
+import os
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
@@ -44,9 +49,17 @@ def create_ratings_structure(browser):
             nextPage = browser.find_element_by_xpath("//a[@class='flat-button lister-page-next next-page']")
             ratings = browser.find_elements(By.XPATH, "//div[contains(@class, 'lister-item mode-detail')]")
 
+            print("Handling lazy loading...")
+            nextPage.send_keys(Keys.END)
+
             print("Found {} ratings".format(len(ratings)))
 
-            downloadImages = False
+            downloadImages = True
+            if downloadImages:
+                if os.system("rm img/*") != 0:
+                    print("Folder was already empty")
+                else:
+                    print("Folder content cleaned")
 
             ratings_titles = []
             for i in ratings:
@@ -57,7 +70,7 @@ def create_ratings_structure(browser):
                     s = str(re.sub(r'\([^)]*\)', '', title).rstrip())
                     movieRating[s] = personal_rating
                     if downloadImages:
-                        print("Trying to download: {}".format(a))
+                        # print("Trying to download: {}".format(a))
                         response = requests.get(a, stream=True)
                         with open('img/' + s + '.jpg', 'wb') as out_file:
                             shutil.copyfileobj(response.raw, out_file)
@@ -70,6 +83,7 @@ def create_ratings_structure(browser):
                 flagNext = False
 
         fileHandler = open(b"movieRatings.obj", "wb")
+        shutil.move("movieRatings.obj", "/Users/apogliaghi/Vagrant/vagrant_shared_folder/movieRatings.obj")
         pickle.dump(movieRating, fileHandler)
         fileHandler.close()
 
@@ -90,8 +104,10 @@ def main():
     # user_id = 'ur59732679'
     user_id = 'ur18123905'
 
+    start_time = time.time()
     b = init_chrome(user_id)
     visit_ratings(b)
+    print("--- %s seconds ---" % (time.time() - start_time))
 
     s = input('Close me?')
 
