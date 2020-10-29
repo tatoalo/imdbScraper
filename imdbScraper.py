@@ -40,6 +40,14 @@ def create_ratings_structure(browser):
         flagNext = True
         k = 0
         movieRating = dict()
+        downloadImages = True
+        errorPics = 0
+
+        if downloadImages:
+            if os.system("rm img/*") != 0:
+                print("Folder was already empty")
+            else:
+                print("Folder content cleaned")
 
         while flagNext:
 
@@ -49,20 +57,12 @@ def create_ratings_structure(browser):
             nextPage = browser.find_element_by_xpath("//a[@class='flat-button lister-page-next next-page']")
             ratings = browser.find_elements(By.XPATH, "//div[contains(@class, 'lister-item mode-detail')]")
 
-            print("Handling lazy loading...")
-            nextPage.send_keys(Keys.END)
-
             print("Found {} ratings".format(len(ratings)))
-
-            downloadImages = True
-            if downloadImages:
-                if os.system("rm img/*") != 0:
-                    print("Folder was already empty")
-                else:
-                    print("Folder content cleaned")
 
             ratings_titles = []
             for i in ratings:
+                # print("Handling lazy loading...")
+                browser.execute_script("window.scrollTo(0, window.scrollY + 200)")
                 if i.text != "":
                     title = i.text.split('\n')[0][3:]
                     a = i.find_element_by_css_selector('img').get_attribute('src')
@@ -70,7 +70,23 @@ def create_ratings_structure(browser):
                     s = str(re.sub(r'\([^)]*\)', '', title).rstrip())
                     movieRating[s] = personal_rating
                     if downloadImages:
-                        # print("Trying to download: {}".format(a))
+                        print("Trying to download: {}".format(a))
+                        if ".png" in a:
+                            print("Scrolling down...")
+                            browser.execute_script("window.scrollTo(0, window.scrollY + 300)")
+                            a = i.find_element_by_css_selector('img').get_attribute('src')
+                            print(f"Scrolled to: {a}")
+                            possibleErrorPic = 0
+                            while ".png" in a:
+                                if possibleErrorPic == 3:
+                                    errorPics = errorPics + 1
+                                    print("**** OUT OF CONTROL ERROR! ****")
+                                    break
+                                print("*** Scrolling again ***")
+                                browser.execute_script("window.scrollTo(0, window.scrollY + 20)")
+                                a = i.find_element_by_css_selector('img').get_attribute('src')
+                                possibleErrorPic = possibleErrorPic + 1
+                                print("*** ONCE AGAIN ***")
                         response = requests.get(a, stream=True)
                         with open('img/' + s + '.jpg', 'wb') as out_file:
                             shutil.copyfileobj(response.raw, out_file)
@@ -83,9 +99,12 @@ def create_ratings_structure(browser):
                 flagNext = False
 
         fileHandler = open(b"movieRatings.obj", "wb")
-        shutil.move("movieRatings.obj", "/Users/apogliaghi/Vagrant/vagrant_shared_folder/movieRatings.obj")
+        shutil.copy("movieRatings.obj", "/Users/apogliaghi/Vagrant/vagrant_shared_folder/movieRatings.obj")
         pickle.dump(movieRating, fileHandler)
         fileHandler.close()
+
+        if errorPics != 0:
+            print(f"*** Found {errorPics} null images! ***")
 
         # print(ratings_titles)
         # print(movieRating)
@@ -104,15 +123,33 @@ def main():
     # user_id = 'ur59732679'
     user_id = 'ur18123905'
 
-    start_time = time.time()
-    b = init_chrome(user_id)
-    visit_ratings(b)
-    print("--- %s seconds ---" % (time.time() - start_time))
+    test = True
 
-    s = input('Close me?')
+    if not test:
+        start_time = time.time()
+        b = init_chrome(user_id)
+        visit_ratings(b)
+        print("--- %s seconds ---" % (time.time() - start_time))
 
-    if s == 'y':
-        close_browser(b)
+        s = input('Close me?')
+
+        if s == 'y':
+            close_browser(b)
+    else:
+        fileHandler = open(b"movieRatings.obj", "rb")
+        diffList = pickle.load(fileHandler)
+        fileHandler.close()
+
+        t = os.listdir("img/")
+
+        print(len(diffList), len(t))
+
+        for _ in t:
+            elementToRemove = _.split('.jpg')[0]
+            try:
+                del(diffList[elementToRemove])
+            except KeyError as e:
+                print(f"missing movie: {e} in movieRatings data structure.")
 
 
 if __name__ == "__main__":
