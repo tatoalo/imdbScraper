@@ -88,6 +88,13 @@ def create_ratings_structure(browser):
                                 possibleErrorPic = possibleErrorPic + 1
                                 print("*** ONCE AGAIN ***")
                         response = requests.get(a, stream=True)
+                        s = s.strip()
+                        finalFileName = ''
+                        if '/' in s:
+                            t = s.split('/')
+                            for _ in t:
+                                finalFileName += ' ' + _
+                            s = finalFileName
                         with open('img/' + s + '.jpg', 'wb') as out_file:
                             shutil.copyfileobj(response.raw, out_file)
                     ratings_titles.append(title)
@@ -121,7 +128,7 @@ def close_browser(browser):
 def main():
     # user_id = 'ur57539865'
     # user_id = 'ur59732679'
-    user_id = 'ur18123905'
+    user_id = 'ur57539865'
 
     test = True
 
