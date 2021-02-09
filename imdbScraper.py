@@ -36,10 +36,17 @@ def create_ratings_structure(b):
     try:
 
         flagNext = True
-        # k = 0
         movieRating = dict()
         downloadImages = False
         errorPics = 0
+
+        # type = None,
+        # movie_name = None,
+        # tv_series_name = None,
+        # year = None,
+        # personal_vote = None,
+        # IMDB_vote = None,
+        # watched_on_date = None
 
         if downloadImages:
             if os.system("rm img/*") != 0:
@@ -49,8 +56,6 @@ def create_ratings_structure(b):
 
         while flagNext:
 
-            # if k != 0:
-            #     time.sleep(2)
             time.sleep(2)
 
             try:
@@ -63,17 +68,45 @@ def create_ratings_structure(b):
 
             print("Found {} ratings".format(len(ratings)))
 
+            # TODO: remove this
+            # flagNext = False
+
             ratings_titles = []
             for i in ratings:
                 # print("Handling lazy loading...")
                 b.execute_script("window.scrollTo(0, window.scrollY + 200)")
-                if i.text != "":
+                if i.text != "" and 'Episode' not in i.text:
+                    ID = i.find_element_by_xpath(".//div[@class='lister-item-image "
+                                                 "ribbonize']").get_attribute('data-tconst')
+
                     title = i.text.split('\n')[0][3:]
                     a = i.find_element_by_css_selector('img').get_attribute('src')
+
+                    data_type = i.text.split('\n')[1].split('|')[0]
+                    if 'TV' in data_type:
+                        data_type = 'tv_series'
+                    else:
+                        data_type = 'movie'
+                    year = re.search(r'\(([^)]+)\)', title)[1]
                     personal_rating = i.text.split('\n')[3]
+                    IMDB_rating = i.text.split('\n')[2]
+                    rated_on = i.text.split('\n')[5].split('on')[1].strip()
+
                     s = str(re.sub(r'\([^)]*\)', '', title).rstrip())
                     s = s.strip('.').strip()
-                    movieRating[s] = personal_rating
+
+                    title = title.strip('.').strip()
+
+                    movieRating[ID] = {
+                        'ID': ID,
+                        'type': data_type,
+                        'title': s,
+                        'year': year,
+                        'personal_rating': personal_rating,
+                        'IMDB_rating': IMDB_rating,
+                        'rated_on': rated_on
+                    }
+
                     if downloadImages:
                         # print("Trying to download: {}".format(a))
                         if ".png" in a:
@@ -104,15 +137,10 @@ def create_ratings_structure(b):
                             s = s.strip('.').strip()
                         with open('img/' + s + '.jpg', 'wb') as out_file:
                             shutil.copyfileobj(response.raw, out_file)
-                    ratings_titles.append(title.strip('.').strip())
+                    ratings_titles.append(title)
 
             if flagNext:
                 nextPage.click()
-            # if k != 1:
-            #     k = k + 1
-            #     nextPage.click()
-            # else:
-            #     flagNext = False
 
         fileHandler = open(b"movieRatings.obj", "wb")
         pickle.dump(movieRating, fileHandler)
@@ -163,7 +191,7 @@ def main():
         for _ in t:
             elementToRemove = _.split('.jpg')[0]
             try:
-                del(diffList[elementToRemove])
+                del (diffList[elementToRemove])
             except KeyError as e:
                 print(f"missing movie: {e} in movieRatings data structure.")
 
