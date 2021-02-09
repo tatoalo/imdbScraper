@@ -40,14 +40,6 @@ def create_ratings_structure(b):
         downloadImages = False
         errorPics = 0
 
-        # type = None,
-        # movie_name = None,
-        # tv_series_name = None,
-        # year = None,
-        # personal_vote = None,
-        # IMDB_vote = None,
-        # watched_on_date = None
-
         if downloadImages:
             if os.system("rm img/*") != 0:
                 print("Folder was already empty")
