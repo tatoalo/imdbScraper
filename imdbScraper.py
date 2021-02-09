@@ -14,27 +14,25 @@ from selenium.webdriver.common.keys import Keys
 def init_chrome(user_id):
     opt_args = Options()
     opt_args.add_argument("--no-sandbox")
-    # opt_args.add_argument("--remote-debugging-port=9222")
+    opt_args.add_argument("--remote-debugging-port=9222")
     opt_args.add_argument("--headless")
     opt_args.add_argument("--window-size=1920,1080")
     opt_args.add_argument("--disable-gpu")
-    browser = webdriver.Chrome(options=opt_args)
-    # browser.maximize_window()
-    # browser = webdriver.Chrome()
+    b = webdriver.Chrome(options=opt_args)
 
-    browser.get("https://www.imdb.com/user/" + user_id)
-    return browser
+    b.get("https://www.imdb.com/user/" + user_id)
+    return b
 
 
-def visit_ratings(browser):
-    ratings_link = browser.find_element_by_partial_link_text('See all')
+def visit_ratings(b):
+    ratings_link = b.find_element_by_partial_link_text('See all')
     ratings_link.send_keys(Keys.RETURN)
 
     # Creating ratings data structure
-    create_ratings_structure(browser)
+    create_ratings_structure(b)
 
 
-def create_ratings_structure(browser):
+def create_ratings_structure(b):
     try:
 
         flagNext = True
@@ -54,15 +52,15 @@ def create_ratings_structure(browser):
             if k != 0:
                 time.sleep(2)
 
-            nextPage = browser.find_element_by_xpath("//a[@class='flat-button lister-page-next next-page']")
-            ratings = browser.find_elements(By.XPATH, "//div[contains(@class, 'lister-item mode-detail')]")
+            nextPage = b.find_element_by_xpath("//a[@class='flat-button lister-page-next next-page']")
+            ratings = b.find_elements(By.XPATH, "//div[contains(@class, 'lister-item mode-detail')]")
 
             print("Found {} ratings".format(len(ratings)))
 
             ratings_titles = []
             for i in ratings:
                 # print("Handling lazy loading...")
-                browser.execute_script("window.scrollTo(0, window.scrollY + 200)")
+                b.execute_script("window.scrollTo(0, window.scrollY + 200)")
                 if i.text != "":
                     title = i.text.split('\n')[0][3:]
                     a = i.find_element_by_css_selector('img').get_attribute('src')
@@ -73,7 +71,7 @@ def create_ratings_structure(browser):
                         print("Trying to download: {}".format(a))
                         if ".png" in a:
                             print("Scrolling down...")
-                            browser.execute_script("window.scrollTo(0, window.scrollY + 300)")
+                            b.execute_script("window.scrollTo(0, window.scrollY + 300)")
                             a = i.find_element_by_css_selector('img').get_attribute('src')
                             print(f"Scrolled to: {a}")
                             possibleErrorPic = 0
@@ -83,7 +81,7 @@ def create_ratings_structure(browser):
                                     print("**** OUT OF CONTROL ERROR! ****")
                                     break
                                 print("*** Scrolling again ***")
-                                browser.execute_script("window.scrollTo(0, window.scrollY + 20)")
+                                b.execute_script("window.scrollTo(0, window.scrollY + 20)")
                                 a = i.find_element_by_css_selector('img').get_attribute('src')
                                 possibleErrorPic = possibleErrorPic + 1
                                 print("*** ONCE AGAIN ***")
@@ -94,7 +92,9 @@ def create_ratings_structure(browser):
                             t = s.split('/')
                             for _ in t:
                                 finalFileName += ' ' + _
-                            s = finalFileName
+                            s = finalFileName.strip()
+                        if '.' in s:
+                            s = s.strip('.').strip()
                         with open('img/' + s + '.jpg', 'wb') as out_file:
                             shutil.copyfileobj(response.raw, out_file)
                     ratings_titles.append(title)
@@ -106,9 +106,9 @@ def create_ratings_structure(browser):
                 flagNext = False
 
         fileHandler = open(b"movieRatings.obj", "wb")
-        shutil.copy("movieRatings.obj", "/Users/apogliaghi/Vagrant/vagrant_shared_folder/movieRatings.obj")
         pickle.dump(movieRating, fileHandler)
         fileHandler.close()
+        shutil.copy("movieRatings.obj", "/Users/apogliaghi/Vagrant/vagrant_shared_folder/movieRatings.obj")
 
         if errorPics != 0:
             print(f"*** Found {errorPics} null images! ***")
