@@ -1,11 +1,11 @@
 import _pickle as pickle
 import re
 import requests
-import selenium
 import shutil
 import time
 import os
 from selenium import webdriver
+from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
@@ -17,7 +17,7 @@ def init_chrome(user_id):
     opt_args.add_argument("--remote-debugging-port=9222")
     opt_args.add_argument("--headless")
     opt_args.add_argument("--window-size=1920,1080")
-    opt_args.add_argument("--disable-gpu")
+    # opt_args.add_argument("--disable-gpu")
     b = webdriver.Chrome(options=opt_args)
 
     b.get("https://www.imdb.com/user/" + user_id)
@@ -36,9 +36,9 @@ def create_ratings_structure(b):
     try:
 
         flagNext = True
-        k = 0
+        # k = 0
         movieRating = dict()
-        downloadImages = True
+        downloadImages = False
         errorPics = 0
 
         if downloadImages:
@@ -49,10 +49,16 @@ def create_ratings_structure(b):
 
         while flagNext:
 
-            if k != 0:
-                time.sleep(2)
+            # if k != 0:
+            #     time.sleep(2)
+            time.sleep(2)
 
-            nextPage = b.find_element_by_xpath("//a[@class='flat-button lister-page-next next-page']")
+            try:
+                nextPage = b.find_element_by_xpath("//a[@class='flat-button lister-page-next next-page']")
+            except NoSuchElementException:
+                print("Visiting last rating page.")
+                flagNext = False
+
             ratings = b.find_elements(By.XPATH, "//div[contains(@class, 'lister-item mode-detail')]")
 
             print("Found {} ratings".format(len(ratings)))
@@ -66,25 +72,26 @@ def create_ratings_structure(b):
                     a = i.find_element_by_css_selector('img').get_attribute('src')
                     personal_rating = i.text.split('\n')[3]
                     s = str(re.sub(r'\([^)]*\)', '', title).rstrip())
+                    s = s.strip('.').strip()
                     movieRating[s] = personal_rating
                     if downloadImages:
-                        print("Trying to download: {}".format(a))
+                        # print("Trying to download: {}".format(a))
                         if ".png" in a:
                             print("Scrolling down...")
                             b.execute_script("window.scrollTo(0, window.scrollY + 300)")
                             a = i.find_element_by_css_selector('img').get_attribute('src')
-                            print(f"Scrolled to: {a}")
+                            # print(f"Scrolled to: {a}")
                             possibleErrorPic = 0
                             while ".png" in a:
                                 if possibleErrorPic == 3:
                                     errorPics = errorPics + 1
-                                    print("**** OUT OF CONTROL ERROR! ****")
+                                    # print("**** OUT OF CONTROL ERROR! ****")
                                     break
-                                print("*** Scrolling again ***")
+                                # print("*** Scrolling again ***")
                                 b.execute_script("window.scrollTo(0, window.scrollY + 20)")
                                 a = i.find_element_by_css_selector('img').get_attribute('src')
                                 possibleErrorPic = possibleErrorPic + 1
-                                print("*** ONCE AGAIN ***")
+                                # print("*** ONCE AGAIN ***")
                         response = requests.get(a, stream=True)
                         s = s.strip()
                         finalFileName = ''
@@ -97,13 +104,15 @@ def create_ratings_structure(b):
                             s = s.strip('.').strip()
                         with open('img/' + s + '.jpg', 'wb') as out_file:
                             shutil.copyfileobj(response.raw, out_file)
-                    ratings_titles.append(title)
+                    ratings_titles.append(title.strip('.').strip())
 
-            if k != 1:
-                k = k + 1
+            if flagNext:
                 nextPage.click()
-            else:
-                flagNext = False
+            # if k != 1:
+            #     k = k + 1
+            #     nextPage.click()
+            # else:
+            #     flagNext = False
 
         fileHandler = open(b"movieRatings.obj", "wb")
         pickle.dump(movieRating, fileHandler)
@@ -116,7 +125,7 @@ def create_ratings_structure(b):
         # print(ratings_titles)
         # print(movieRating)
 
-    except selenium.common.exceptions.NoSuchElementException:
+    except NoSuchElementException:
         print('*** NOT FOUND ***')
 
 
@@ -130,7 +139,7 @@ def main():
     # user_id = 'ur59732679'
     user_id = 'ur57539865'
 
-    test = True
+    test = False
 
     if not test:
         start_time = time.time()
