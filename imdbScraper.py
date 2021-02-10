@@ -17,7 +17,7 @@ def init_chrome(user_id):
     opt_args.add_argument("--remote-debugging-port=9222")
     opt_args.add_argument("--headless")
     opt_args.add_argument("--window-size=1920,1080")
-    # opt_args.add_argument("--disable-gpu")
+    opt_args.add_argument("--disable-gpu")
     b = webdriver.Chrome(options=opt_args)
 
     b.get("https://www.imdb.com/user/" + user_id)
@@ -83,6 +83,7 @@ def create_ratings_structure(b):
                     personal_rating = i.text.split('\n')[3]
                     IMDB_rating = i.text.split('\n')[2]
                     rated_on = i.text.split('\n')[5].split('on')[1].strip()
+                    genre = i.text.split('\n')[1].split('|')[len(i.text.split('\n')[1].split('|'))-1].strip()
 
                     s = str(re.sub(r'\([^)]*\)', '', title).rstrip())
                     s = s.strip('.').strip()
@@ -93,6 +94,7 @@ def create_ratings_structure(b):
                         'ID': ID,
                         'type': data_type,
                         'title': s,
+                        'genre': genre,
                         'year': year,
                         'personal_rating': personal_rating,
                         'IMDB_rating': IMDB_rating,
