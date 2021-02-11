@@ -42,7 +42,7 @@ def main():
 
     # Initialize writing.
     if WRITE:
-        font = ImageFont.truetype("HappyMonkey-Regular.ttf", 50)
+        font = ImageFont.truetype("font.ttf", 60)
 
     imgno = 0
 
