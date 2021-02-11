@@ -2,6 +2,7 @@
 img/
 *.jpg
 *.png
+*.obj
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
