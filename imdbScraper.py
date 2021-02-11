@@ -94,9 +94,11 @@ def create_ratings_structure(b):
                         else:
                             # Freaking Coen brothers! :P
                             if 'Directors' in str(people):
-                                director = people[0].strip('Directors: ').strip()
+                                # director = people[0].strip('Directors: ').strip()
+                                director = people[0].split('Directors: ')[1].strip()
                             else:
-                                director = people[0].strip('Director: ').strip()
+                                # director = people[0].strip('Director: ').strip()
+                                director = people[0].split('Director: ')[1].strip()
                             actors = people[1].split('Stars: ')[1].split(',')
                             actors = [a.strip() for a in actors]
 
