@@ -1,6 +1,7 @@
 # Project-specific
 img/
 *.jpg
+*.png
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
