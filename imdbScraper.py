@@ -75,10 +75,27 @@ def create_ratings_structure(b):
                     a = i.find_element_by_css_selector('img').get_attribute('src')
 
                     data_type = i.text.split('\n')[1].split('|')[0]
+                    director = ''
+                    actors = ''
                     if 'TV' in data_type:
                         data_type = 'tv_series'
+                        if 'Stars' in str(i.text):
+                            actors = i.text.split('\n')[len(i.text.split('\n'))-2].split("Stars: ")[1].split(',')
+                            actors = [a.strip() for a in actors]
                     else:
                         data_type = 'movie'
+                        people = i.text.split('\n')[len(i.text.split('\n')) - 2].split('|')
+                        if 'Prime' in str(people):
+                            people = i.text.split('\n')[len(i.text.split('\n')) - 4].split('|')
+                        # Certain docs have no directors data
+                        if len(people) == 1:
+                            actors = people[0].split('Stars: ')[1].split(',')
+                            actors = [a.strip() for a in actors]
+                        else:
+                            director = people[0].strip('Director: ').strip()
+                            actors = people[1].split('Stars: ')[1].split(',')
+                            actors = [a.strip() for a in actors]
+
                     year = re.search(r'\(([^)]+)\)', title)[1]
                     personal_rating = i.text.split('\n')[3]
                     IMDB_rating = i.text.split('\n')[2]
@@ -98,7 +115,9 @@ def create_ratings_structure(b):
                         'year': year,
                         'personal_rating': personal_rating,
                         'IMDB_rating': IMDB_rating,
-                        'rated_on': rated_on
+                        'rated_on': rated_on,
+                        'actors': actors,
+                        'director': director
                     }
 
                     if downloadImages:
