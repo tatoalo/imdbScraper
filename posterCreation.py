@@ -91,7 +91,7 @@ def main():
             del draw
 
         imgno += 1
-        
+
     img.save("collage.png")
 
 

@@ -157,37 +157,13 @@ def close_browser(browser):
 
 
 def main():
-    # user_id = 'ur57539865'
-    # user_id = 'ur59732679'
     user_id = 'ur57539865'
 
-    test = False
-
-    if not test:
-        start_time = time.time()
-        b = init_chrome(user_id)
-        visit_ratings(b)
-        print("--- %s seconds ---" % (time.time() - start_time))
-
-        s = input('Close me?')
-
-        if s == 'y':
-            close_browser(b)
-    else:
-        fileHandler = open(b"movieRatings.obj", "rb")
-        diffList = pickle.load(fileHandler)
-        fileHandler.close()
-
-        t = os.listdir("img/")
-
-        print(len(diffList), len(t))
-
-        for _ in t:
-            elementToRemove = _.split('.jpg')[0]
-            try:
-                del (diffList[elementToRemove])
-            except KeyError as e:
-                print(f"missing movie: {e} in movieRatings data structure.")
+    start_time = time.time()
+    b = init_chrome(user_id)
+    visit_ratings(b)
+    print("--- %s seconds ---" % (time.time() - start_time))
+    close_browser(b)
 
 
 if __name__ == "__main__":
