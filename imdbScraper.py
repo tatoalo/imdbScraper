@@ -60,9 +60,6 @@ def create_ratings_structure(b):
 
             print("Found {} ratings".format(len(ratings)))
 
-            # TODO: remove this
-            # flagNext = False
-
             ratings_titles = []
             for i in ratings:
                 # print("Handling lazy loading...")
@@ -77,6 +74,7 @@ def create_ratings_structure(b):
                     data_type = i.text.split('\n')[1].split('|')[0]
                     director = ''
                     actors = ''
+                    runtime = ''
                     if 'TV' in data_type:
                         data_type = 'tv_series'
                         if 'Stars' in str(i.text):
@@ -84,6 +82,7 @@ def create_ratings_structure(b):
                             actors = [a.strip() for a in actors]
                     else:
                         data_type = 'movie'
+                        runtime = i.text.split('\n')[1].split('|')[len(i.text.split('\n')[1].split('|'))-2].strip()
                         people = i.text.split('\n')[len(i.text.split('\n')) - 2].split('|')
                         if 'Prime' in str(people):
                             people = i.text.split('\n')[len(i.text.split('\n')) - 4].split('|')
@@ -121,7 +120,8 @@ def create_ratings_structure(b):
                         'IMDB_rating': IMDB_rating,
                         'rated_on': rated_on,
                         'actors': actors,
-                        'director': director
+                        'director': director,
+                        'runtime': runtime
                     }
 
                     if downloadImages:
