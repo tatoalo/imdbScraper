@@ -100,6 +100,10 @@ def create_ratings_structure(b):
                             actors = [a.strip() for a in actors]
 
                     year = re.search(r'\(([^)]+)\)', title)[1]
+                    # Handling multi-versioning of existing titles
+                    if 'I' in year:
+                        y = i.text.split('\n')[0].split("I")[1]
+                        year = re.search(r'\(([^)]+)\)', y)[1]
                     personal_rating = i.text.split('\n')[3]
                     IMDB_rating = i.text.split('\n')[2]
                     rated_on = i.text.split('\n')[5].split('on')[1].strip()
