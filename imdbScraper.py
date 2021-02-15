@@ -60,108 +60,117 @@ def create_ratings_structure(b):
 
             print("Found {} ratings".format(len(ratings)))
 
-            ratings_titles = []
-            for i in ratings:
-                # print("Handling lazy loading...")
-                b.execute_script("window.scrollTo(0, window.scrollY + 200)")
-                if i.text != "" and 'Episode' not in i.text:
-                    ID = i.find_element_by_xpath(".//div[@class='lister-item-image "
-                                                 "ribbonize']").get_attribute('data-tconst')
+            try:
+                ratings_titles = []
+                for i in ratings:
+                    # print("Handling lazy loading...")
+                    b.execute_script("window.scrollTo(0, window.scrollY + 200)")
+                    if i.text != "" and 'Episode' not in i.text:
+                        ID = i.find_element_by_xpath(".//div[@class='lister-item-image "
+                                                     "ribbonize']").get_attribute('data-tconst')
 
-                    title = i.text.split('\n')[0][3:]
-                    a = i.find_element_by_css_selector('img').get_attribute('src')
+                        title = i.text.split('\n')[0][3:]
+                        a = i.find_element_by_css_selector('img').get_attribute('src')
 
-                    data_type = i.text.split('\n')[1].split('|')[0]
-                    director = ''
-                    actors = ''
-                    runtime = ''
-                    if 'TV' in data_type:
-                        data_type = 'tv_series'
-                        if 'Stars' in str(i.text):
-                            actors = i.text.split('\n')[len(i.text.split('\n'))-2].split("Stars: ")[1].split(',')
-                            actors = [a.strip() for a in actors]
-                    else:
-                        data_type = 'movie'
-                        runtime = i.text.split('\n')[1].split('|')[len(i.text.split('\n')[1].split('|'))-2].strip()
-                        people = i.text.split('\n')[len(i.text.split('\n')) - 2].split('|')
-                        if 'Prime' in str(people):
-                            people = i.text.split('\n')[len(i.text.split('\n')) - 4].split('|')
-                        # Certain docs have no directors data
-                        if len(people) == 1:
-                            actors = people[0].split('Stars: ')[1].split(',')
-                            actors = [a.strip() for a in actors]
+                        data_type = i.text.split('\n')[1].split('|')[0]
+                        director = ''
+                        actors = ''
+                        runtime = ''
+                        if 'TV' in data_type:
+                            data_type = 'tv_series'
+                            if 'Stars' in str(i.text):
+                                actors = i.text.split('\n')[len(i.text.split('\n'))-2].split("Stars: ")[1].split(',')
+                                actors = [a.strip() for a in actors]
                         else:
-                            # Freaking Coen brothers! :P
-                            if 'Directors' in str(people):
-                                director = people[0].split('Directors: ')[1].strip()
+                            data_type = 'movie'
+                            runtime = i.text.split('\n')[1].split('|')[len(i.text.split('\n')[1].split('|'))-2].strip()
+                            if 'min' not in runtime:
+                                runtime = ""
+                            people = i.text.split('\n')[len(i.text.split('\n')) - 2].split('|')
+                            if 'Prime' in str(people):
+                                people = i.text.split('\n')[len(i.text.split('\n')) - 4].split('|')
+                            # Certain docs have no directors data
+                            if len(people) == 1:
+                                actors = people[0].split('Stars: ')[1].split(',')
+                                actors = [a.strip() for a in actors]
                             else:
-                                director = people[0].split('Director: ')[1].strip()
-                            actors = people[1].split('Stars: ')[1].split(',')
-                            actors = [a.strip() for a in actors]
+                                # Freaking Coen brothers! :P
+                                if 'Directors' in str(people):
+                                    director = people[0].split('Directors: ')[1].strip()
+                                else:
+                                    director = people[0].split('Director: ')[1].strip()
+                                actors = people[1].split('Stars: ')[1].split(',')
+                                actors = [a.strip() for a in actors]
 
-                    year = re.search(r'\(([^)]+)\)', title)[1]
-                    # Handling multi-versioning of existing titles
-                    if 'I' in year:
-                        y = i.text.split('\n')[0].split("I")[len(i.text.split('\n')[0].split("I"))-1]
-                        year = re.search(r'\(([^)]+)\)', y)[1]
-                    personal_rating = i.text.split('\n')[3]
-                    IMDB_rating = i.text.split('\n')[2]
-                    rated_on = i.text.split('\n')[5].split('on')[1].strip()
-                    genre = i.text.split('\n')[1].split('|')[len(i.text.split('\n')[1].split('|'))-1].strip()
+                        year = re.search(r'\(([^)]+)\)', title)[1]
+                        # Handling multi-versioning of existing titles
+                        if 'I' in year:
+                            y = i.text.split('\n')[0].split("I")[len(i.text.split('\n')[0].split("I"))-1]
+                            year = re.search(r'\(([^)]+)\)', y)[1]
+                        personal_rating = i.text.split('\n')[3]
+                        IMDB_rating = i.text.split('\n')[2]
+                        rated_on = i.text.split('\n')[5].split('on')[1].strip()
+                        genre = i.text.split('\n')[1].split('|')[len(i.text.split('\n')[1].split('|'))-1].strip()
 
-                    s = str(re.sub(r'\([^)]*\)', '', title).rstrip())
-                    s = s.strip('.').strip()
+                        s = str(re.sub(r'\([^)]*\)', '', title).rstrip())
+                        s = s.strip('.').strip()
 
-                    title = title.strip('.').strip()
+                        title = title.strip('.').strip()
 
-                    movieRating[ID] = {
-                        'ID': ID,
-                        'type': data_type,
-                        'title': s,
-                        'genre': genre,
-                        'year': year,
-                        'personal_rating': personal_rating,
-                        'IMDB_rating': IMDB_rating,
-                        'rated_on': rated_on,
-                        'actors': actors,
-                        'director': director,
-                        'runtime': runtime
-                    }
+                        movieRating[ID] = {
+                            'ID': ID,
+                            'type': data_type,
+                            'title': s,
+                            'genre': genre,
+                            'year': year,
+                            'personal_rating': personal_rating,
+                            'IMDB_rating': IMDB_rating,
+                            'rated_on': rated_on,
+                            'actors': actors,
+                            'director': director,
+                            'runtime': runtime
+                        }
 
-                    if downloadImages:
-                        # print("Trying to download: {}".format(a))
-                        if ".png" in a:
-                            print("Scrolling down...")
-                            b.execute_script("window.scrollTo(0, window.scrollY + 300)")
-                            a = i.find_element_by_css_selector('img').get_attribute('src')
-                            # print(f"Scrolled to: {a}")
-                            possibleErrorPic = 0
-                            while ".png" in a:
-                                if possibleErrorPic == 3:
-                                    errorPics = errorPics + 1
-                                    # print("**** OUT OF CONTROL ERROR! ****")
-                                    break
-                                # print("*** Scrolling again ***")
-                                b.execute_script("window.scrollTo(0, window.scrollY + 20)")
+                        if downloadImages:
+                            # print("Trying to download: {}".format(a))
+                            if ".png" in a:
+                                print("Scrolling down...")
+                                b.execute_script("window.scrollTo(0, window.scrollY + 300)")
                                 a = i.find_element_by_css_selector('img').get_attribute('src')
-                                possibleErrorPic = possibleErrorPic + 1
-                                # print("*** ONCE AGAIN ***")
-                        response = requests.get(a, stream=True)
-                        s = s.strip()
-                        finalFileName = ''
-                        if '/' in s:
-                            t = s.split('/')
-                            for _ in t:
-                                finalFileName += ' ' + _
-                            s = finalFileName.strip()
-                        if '.' in s:
-                            s = s.strip('.').strip()
-                        with open('img/' + s + '.jpg', 'wb') as out_file:
-                            shutil.copyfileobj(response.raw, out_file)
-                    ratings_titles.append(title)
+                                # print(f"Scrolled to: {a}")
+                                possibleErrorPic = 0
+                                while ".png" in a:
+                                    if possibleErrorPic == 3:
+                                        errorPics = errorPics + 1
+                                        # print("**** OUT OF CONTROL ERROR! ****")
+                                        break
+                                    # print("*** Scrolling again ***")
+                                    b.execute_script("window.scrollTo(0, window.scrollY + 20)")
+                                    a = i.find_element_by_css_selector('img').get_attribute('src')
+                                    possibleErrorPic = possibleErrorPic + 1
+                                    # print("*** ONCE AGAIN ***")
+                            response = requests.get(a, stream=True)
+                            s = s.strip()
+                            finalFileName = ''
+                            if '/' in s:
+                                t = s.split('/')
+                                for _ in t:
+                                    finalFileName += ' ' + _
+                                s = finalFileName.strip()
+                            if '.' in s:
+                                s = s.strip('.').strip()
+                            with open('img/' + s + '.jpg', 'wb') as out_file:
+                                shutil.copyfileobj(response.raw, out_file)
+                        ratings_titles.append(title)
 
-            if flagNext:
-                nextPage.click()
+                if flagNext:
+                    nextPage.click()
+
+            except Exception as e:
+                print("*** Error ***")
+                print(e)
+                print(i.text)
+                close_browser()
 
         fileHandler = open(b"movieRatings.obj", "wb")
         pickle.dump(movieRating, fileHandler)
