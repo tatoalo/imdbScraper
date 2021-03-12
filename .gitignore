@@ -1,6 +1,6 @@
 # Project-specific
 img/
-*.jpg
+#*.jpg
 *.png
 *.obj
 
